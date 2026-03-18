@@ -1,4 +1,6 @@
 import ScanQR from "@/components/ScanQR";
+import { bech32 } from "bech32";
+import { Buffer } from "buffer";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Button, Dialog, Portal, Text } from "react-native-paper";
@@ -7,6 +9,18 @@ export default function Index() {
     const [isScanning, setIsScanning] = useState(false);
     const [showDialog, setShowDialog] = useState(false);
     const [codeContent, setCodeContent] = useState("");
+
+    const decodedContent = (() => {
+        const [prefix, encoded] = codeContent.split(":");
+        if (!encoded || prefix.toLowerCase() !== "lightning") {
+            return `Invalid QR content. 
+            Prefix: ${prefix}
+            Encoded: ${encoded}`;
+        }
+
+        let decoded = bech32.decode(encoded, 1023);
+        return Buffer.from(bech32.fromWords(decoded.words)).toString("utf8");
+    })();
 
     if (isScanning) {
         return (
@@ -38,7 +52,7 @@ export default function Index() {
                     <Dialog.Title>Scanned code content</Dialog.Title>
                     <Dialog.Content>
                         <Text variant="bodyMedium">
-                            Content of QR code: {codeContent}
+                            Content of QR code: {decodedContent}
                         </Text>
                     </Dialog.Content>
                     <Dialog.Actions>
